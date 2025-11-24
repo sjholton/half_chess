@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Half Chess Board - FEN Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 3px solid #333;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .square.light {
+            background-color: #f0d9b5;
+        }
+
+        .square.dark {
+            background-color: #b58863;
+        }
+
+        .square.player1-half {
+            border-top: 2px dashed rgba(255, 0, 0, 0.3);
+        }
+
+        .square.player2-half {
+            border-bottom: 2px dashed rgba(0, 0, 255, 0.3);
+        }
+
+        .square:hover {
+            opacity: 0.8;
+        }
+
+        .square.drag-over {
+            background-color: #7fbf7f !important;
+        }
+
+        .piece {
+            cursor: move;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+
+        .piece:hover {
+            transform: scale(1.1);
+        }
+
+        .piece.dragging {
+            opacity: 0.5;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #0b7dda;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-danger {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .output-section {
+            margin-top: 25px;
+        }
+
+        .output-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .fen-output {
+            width: 100%;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .fen-output:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info-section {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .info-section p {
+            color: #1565c0;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+
+        .player-label {
+            font-weight: 600;
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .player1-label {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .player2-label {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Half Chess Board</h1>
+        <p class="subtitle">Position your pieces and generate FEN notation</p>
+
+        <div class="info-section">
+            <p><strong>Instructions:</strong></p>
+            <p>• Player 1 (Red): Position pieces on ranks 5-8 (top half)</p>
+            <p>• Player 2 (Blue): Position pieces on ranks 1-4 (bottom half)</p>
+            <p>• Drag and drop pieces to any square in your half</p>
+            <p>• Click "Generate FEN" to create the board notation</p>
+        </div>
+
+        <div class="board-container">
+            <div id="chessboard" class="chessboard"></div>
+        </div>
+
+        <div class="controls">
+            <div class="button-group">
+                <button class="btn-primary" onclick="generateFEN()">Generate FEN</button>
+                <button class="btn-secondary" onclick="resetBoard()">Reset to Starting Position</button>
+                <button class="btn-danger" onclick="clearBoard()">Clear All Pieces</button>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="output-label">FEN Notation:</div>
+            <textarea id="fenOutput" class="fen-output" readonly placeholder="Click 'Generate FEN' to create the notation..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        // Chess piece Unicode symbols
+        const pieces = {
+            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙', // White pieces
+            'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'  // Black pieces
+        };
+
+        // Initial board setup (standard chess starting position)
+        let board = [
+            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], // Rank 8 (Player 1 half)
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], // Rank 7 (Player 1 half)
+            ['', '', '', '', '', '', '', ''],         // Rank 6 (Player 1 half)
+            ['', '', '', '', '', '', '', ''],         // Rank 5 (Player 1 half)
+            ['', '', '', '', '', '', '', ''],         // Rank 4 (Player 2 half)
+            ['', '', '', '', '', '', '', ''],         // Rank 3 (Player 2 half)
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], // Rank 2 (Player 2 half)
+            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']  // Rank 1 (Player 2 half)
+        ];
+
+        let draggedPiece = null;
+        let draggedFrom = null;
+
+        function createBoard() {
+            const chessboard = document.getElementById('chessboard');
+            chessboard.innerHTML = '';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
+
+                    // Mark player halves
+                    if (row <= 3) {
+                        square.className += ' player1-half';
+                    } else {
+                        square.className += ' player2-half';
+                    }
+
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+
+                    // Add piece if exists
+                    const piece = board[row][col];
+                    if (piece) {
+                        const pieceElement = document.createElement('span');
+                        pieceElement.className = 'piece';
+                        pieceElement.textContent = pieces[piece];
+                        pieceElement.draggable = true;
+                        pieceElement.dataset.piece = piece;
+
+                        pieceElement.addEventListener('dragstart', handleDragStart);
+                        pieceElement.addEventListener('dragend', handleDragEnd);
+
+                        square.appendChild(pieceElement);
+                    }
+
+                    square.addEventListener('dragover', handleDragOver);
+                    square.addEventListener('drop', handleDrop);
+                    square.addEventListener('dragleave', handleDragLeave);
+
+                    chessboard.appendChild(square);
+                }
+            }
+        }
+
+        function handleDragStart(e) {
+            draggedPiece = e.target;
+            const square = e.target.parentElement;
+            draggedFrom = {
+                row: parseInt(square.dataset.row),
+                col: parseInt(square.dataset.col)
+            };
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.square').forEach(sq => {
+                sq.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            const square = e.currentTarget;
+            const targetRow = parseInt(square.dataset.row);
+
+            // Check if move is valid (within player's half)
+            const piece = draggedPiece.dataset.piece;
+            const isWhitePiece = piece === piece.toUpperCase();
+            const isValidMove = (isWhitePiece && targetRow >= 4) || (!isWhitePiece && targetRow <= 3);
+
+            if (isValidMove) {
+                square.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const square = e.currentTarget;
+            const targetRow = parseInt(square.dataset.row);
+            const targetCol = parseInt(square.dataset.col);
+
+            // Check if move is valid (within player's half)
+            const piece = draggedPiece.dataset.piece;
+            const isWhitePiece = piece === piece.toUpperCase();
+            const isValidMove = (isWhitePiece && targetRow >= 4) || (!isWhitePiece && targetRow <= 3);
+
+            if (isValidMove) {
+                // Remove piece from old position
+                board[draggedFrom.row][draggedFrom.col] = '';
+
+                // Place piece in new position
+                board[targetRow][targetCol] = piece;
+
+                // Redraw board
+                createBoard();
+            }
+
+            square.classList.remove('drag-over');
+        }
+
+        function generateFEN() {
+            let fen = '';
+
+            for (let row = 0; row < 8; row++) {
+                let emptyCount = 0;
+
+                for (let col = 0; col < 8; col++) {
+                    const piece = board[row][col];
+
+                    if (piece === '') {
+                        emptyCount++;
+                    } else {
+                        if (emptyCount > 0) {
+                            fen += emptyCount;
+                            emptyCount = 0;
+                        }
+                        fen += piece;
+                    }
+                }
+
+                if (emptyCount > 0) {
+                    fen += emptyCount;
+                }
+
+                if (row < 7) {
+                    fen += '/';
+                }
+            }
+
+            // Add additional FEN components (active color, castling, en passant, halfmove, fullmove)
+            // Default: white to move, no castling rights, no en passant, 0 halfmoves, move 1
+            fen += ' w - - 0 1';
+
+            document.getElementById('fenOutput').value = fen;
+        }
+
+        function resetBoard() {
+            board = [
+                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+            ];
+            createBoard();
+            document.getElementById('fenOutput').value = '';
+        }
+
+        function clearBoard() {
+            board = Array(8).fill().map(() => Array(8).fill(''));
+            createBoard();
+            document.getElementById('fenOutput').value = '';
+        }
+
+        // Initialize the board on page load
+        createBoard();
+    </script>
+</body>
+</html>
