@@ -295,7 +295,7 @@
                 <button id="nextButton" class="btn-next" onclick="nextPlayer()">Next (Pass to Black)</button>
                 <button id="generateButton" class="btn-primary hidden" onclick="generateFEN()">Generate FEN</button>
                 <button class="btn-secondary" onclick="resetBoard()">Reset to Starting Position</button>
-                <button class="btn-danger" onclick="clearBoard()">Clear All Pieces</button>
+                <button id="resetBlackButton" class="btn-danger hidden" onclick="resetBlackPieces()">Reset Black Pieces</button>
             </div>
         </div>
 
@@ -490,6 +490,12 @@
             fen += ' w - - 0 1';
 
             document.getElementById('fenOutput').value = fen;
+
+            // Disable the button after first use to prevent inferring opponent's position
+            const generateButton = document.getElementById('generateButton');
+            generateButton.disabled = true;
+            generateButton.style.opacity = '0.5';
+            generateButton.style.cursor = 'not-allowed';
         }
 
         function nextPlayer() {
@@ -500,9 +506,10 @@
             banner.className = 'current-player-banner black-turn';
             banner.textContent = "Black's Turn - Set up your pieces (Ranks 5-8)";
 
-            // Hide Next button, show Generate FEN button
+            // Hide Next button, show Generate FEN and Reset Black Pieces buttons
             document.getElementById('nextButton').classList.add('hidden');
             document.getElementById('generateButton').classList.remove('hidden');
+            document.getElementById('resetBlackButton').classList.remove('hidden');
 
             // Redraw board to grey out white's side
             createBoard();
@@ -529,26 +536,32 @@
             // Reset buttons
             document.getElementById('nextButton').classList.remove('hidden');
             document.getElementById('generateButton').classList.add('hidden');
+            document.getElementById('resetBlackButton').classList.add('hidden');
+
+            // Re-enable Generate FEN button
+            const generateButton = document.getElementById('generateButton');
+            generateButton.disabled = false;
+            generateButton.style.opacity = '1';
+            generateButton.style.cursor = 'pointer';
 
             createBoard();
             document.getElementById('fenOutput').value = '';
         }
 
-        function clearBoard() {
-            board = Array(8).fill().map(() => Array(8).fill(''));
-            currentPlayer = 'white';
+        function resetBlackPieces() {
+            // Reset only black pieces (ranks 5-8, which are rows 0-3 in our array)
+            board[0] = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
+            board[1] = ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'];
+            board[2] = ['', '', '', '', '', '', '', ''];
+            board[3] = ['', '', '', '', '', '', '', ''];
 
-            // Reset banner
-            const banner = document.getElementById('currentPlayerBanner');
-            banner.className = 'current-player-banner white-turn';
-            banner.textContent = "White's Turn - Set up your pieces (Ranks 1-4)";
-
-            // Reset buttons
-            document.getElementById('nextButton').classList.remove('hidden');
-            document.getElementById('generateButton').classList.add('hidden');
+            // Re-enable Generate FEN button since pieces have changed
+            const generateButton = document.getElementById('generateButton');
+            generateButton.disabled = false;
+            generateButton.style.opacity = '1';
+            generateButton.style.cursor = 'pointer';
 
             createBoard();
-            document.getElementById('fenOutput').value = '';
         }
 
         // Initialize the board on page load
