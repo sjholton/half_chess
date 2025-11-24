@@ -491,11 +491,16 @@
 
             document.getElementById('fenOutput').value = fen;
 
-            // Disable the button after first use to prevent inferring opponent's position
+            // Disable buttons after first use to prevent inferring opponent's position
             const generateButton = document.getElementById('generateButton');
             generateButton.disabled = true;
             generateButton.style.opacity = '0.5';
             generateButton.style.cursor = 'not-allowed';
+
+            const resetBlackButton = document.getElementById('resetBlackButton');
+            resetBlackButton.disabled = true;
+            resetBlackButton.style.opacity = '0.5';
+            resetBlackButton.style.cursor = 'not-allowed';
         }
 
         function nextPlayer() {
@@ -543,6 +548,12 @@
             generateButton.disabled = false;
             generateButton.style.opacity = '1';
             generateButton.style.cursor = 'pointer';
+
+            // Re-enable Reset Black Pieces button
+            const resetBlackButton = document.getElementById('resetBlackButton');
+            resetBlackButton.disabled = false;
+            resetBlackButton.style.opacity = '1';
+            resetBlackButton.style.cursor = 'pointer';
 
             createBoard();
             document.getElementById('fenOutput').value = '';
