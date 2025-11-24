@@ -343,11 +343,20 @@
             e.preventDefault();
             const square = e.currentTarget;
             const targetRow = parseInt(square.dataset.row);
+            const targetCol = parseInt(square.dataset.col);
 
             // Check if move is valid (within player's half)
             const piece = draggedPiece.dataset.piece;
             const isWhitePiece = piece === piece.toUpperCase();
-            const isValidMove = (isWhitePiece && targetRow >= 4) || (!isWhitePiece && targetRow <= 3);
+            const isValidHalf = (isWhitePiece && targetRow >= 4) || (!isWhitePiece && targetRow <= 3);
+
+            // Check if target square has a piece of the same color
+            const targetPiece = board[targetRow][targetCol];
+            const isSameColor = targetPiece !== '' &&
+                               (targetPiece === targetPiece.toUpperCase()) === isWhitePiece;
+
+            // Show visual feedback only if move is valid
+            const isValidMove = isValidHalf && !isSameColor;
 
             if (isValidMove) {
                 square.classList.add('drag-over');
@@ -367,7 +376,15 @@
             // Check if move is valid (within player's half)
             const piece = draggedPiece.dataset.piece;
             const isWhitePiece = piece === piece.toUpperCase();
-            const isValidMove = (isWhitePiece && targetRow >= 4) || (!isWhitePiece && targetRow <= 3);
+            const isValidHalf = (isWhitePiece && targetRow >= 4) || (!isWhitePiece && targetRow <= 3);
+
+            // Check if target square has a piece of the same color
+            const targetPiece = board[targetRow][targetCol];
+            const isSameColor = targetPiece !== '' &&
+                               (targetPiece === targetPiece.toUpperCase()) === isWhitePiece;
+
+            // Move is valid only if in correct half AND not overlapping same color
+            const isValidMove = isValidHalf && !isSameColor;
 
             if (isValidMove) {
                 // Remove piece from old position
