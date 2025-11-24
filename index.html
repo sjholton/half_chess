@@ -223,19 +223,67 @@
             background-color: #e3f2fd;
             color: #1565c0;
         }
+
+        .square.greyed-out {
+            background-color: #999 !important;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .square.greyed-out .piece {
+            visibility: hidden;
+        }
+
+        .current-player-banner {
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .current-player-banner.white-turn {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .current-player-banner.black-turn {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .btn-next {
+            background-color: #FF9800;
+            color: white;
+        }
+
+        .btn-next:hover {
+            background-color: #F57C00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Half Chess Board</h1>
-        <p class="subtitle">Position your pieces and generate FEN notation</p>
+        <p class="subtitle">Blind setup - Position your pieces without seeing your opponent's</p>
+
+        <div id="currentPlayerBanner" class="current-player-banner white-turn">
+            White's Turn - Set up your pieces (Ranks 1-4)
+        </div>
 
         <div class="info-section">
             <p><strong>Instructions:</strong></p>
-            <p>• Player 1 (Red): Position pieces on ranks 5-8 (top half)</p>
-            <p>• Player 2 (Blue): Position pieces on ranks 1-4 (bottom half)</p>
+            <p>• White sets up first on ranks 1-4 (bottom half), then clicks "Next"</p>
+            <p>• Black sets up on ranks 5-8 (top half), then clicks "Generate FEN"</p>
+            <p>• Players cannot see opponent's pieces during setup</p>
             <p>• Drag and drop pieces to any square in your half</p>
-            <p>• Click "Generate FEN" to create the board notation</p>
         </div>
 
         <div class="board-container">
@@ -244,7 +292,8 @@
 
         <div class="controls">
             <div class="button-group">
-                <button class="btn-primary" onclick="generateFEN()">Generate FEN</button>
+                <button id="nextButton" class="btn-next" onclick="nextPlayer()">Next (Pass to Black)</button>
+                <button id="generateButton" class="btn-primary hidden" onclick="generateFEN()">Generate FEN</button>
                 <button class="btn-secondary" onclick="resetBoard()">Reset to Starting Position</button>
                 <button class="btn-danger" onclick="clearBoard()">Clear All Pieces</button>
             </div>
@@ -277,6 +326,7 @@
 
         let draggedPiece = null;
         let draggedFrom = null;
+        let currentPlayer = 'white'; // Track whose turn it is to setup
 
         function createBoard() {
             const chessboard = document.getElementById('chessboard');
@@ -293,6 +343,12 @@
                         square.className += ' player1-half';
                     } else {
                         square.className += ' player2-half';
+                    }
+
+                    // Grey out opponent's half
+                    if ((currentPlayer === 'white' && row <= 3) ||
+                        (currentPlayer === 'black' && row >= 4)) {
+                        square.className += ' greyed-out';
                     }
 
                     square.dataset.row = row;
@@ -436,6 +492,22 @@
             document.getElementById('fenOutput').value = fen;
         }
 
+        function nextPlayer() {
+            currentPlayer = 'black';
+
+            // Update banner
+            const banner = document.getElementById('currentPlayerBanner');
+            banner.className = 'current-player-banner black-turn';
+            banner.textContent = "Black's Turn - Set up your pieces (Ranks 5-8)";
+
+            // Hide Next button, show Generate FEN button
+            document.getElementById('nextButton').classList.add('hidden');
+            document.getElementById('generateButton').classList.remove('hidden');
+
+            // Redraw board to grey out white's side
+            createBoard();
+        }
+
         function resetBoard() {
             board = [
                 ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -447,12 +519,34 @@
                 ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
                 ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
             ];
+            currentPlayer = 'white';
+
+            // Reset banner
+            const banner = document.getElementById('currentPlayerBanner');
+            banner.className = 'current-player-banner white-turn';
+            banner.textContent = "White's Turn - Set up your pieces (Ranks 1-4)";
+
+            // Reset buttons
+            document.getElementById('nextButton').classList.remove('hidden');
+            document.getElementById('generateButton').classList.add('hidden');
+
             createBoard();
             document.getElementById('fenOutput').value = '';
         }
 
         function clearBoard() {
             board = Array(8).fill().map(() => Array(8).fill(''));
+            currentPlayer = 'white';
+
+            // Reset banner
+            const banner = document.getElementById('currentPlayerBanner');
+            banner.className = 'current-player-banner white-turn';
+            banner.textContent = "White's Turn - Set up your pieces (Ranks 1-4)";
+
+            // Reset buttons
+            document.getElementById('nextButton').classList.remove('hidden');
+            document.getElementById('generateButton').classList.add('hidden');
+
             createBoard();
             document.getElementById('fenOutput').value = '';
         }
